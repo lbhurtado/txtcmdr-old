@@ -1,7 +1,9 @@
 $app_root     = '/vagrant'
 $doc_root     = "$app_root/web"
-$sys_packages = ['build-essential', 'curl', 'vim']
+
+$sys_packages = ['build-essential', 'curl', 'vim', 'ssh', 'swaks']
 $php_modules  = ['imagick', 'curl', 'mysql', 'cli', 'intl', 'mcrypt', 'memcache']
+
 $mysql_host   = 'localhost'
 $mysql_db     = 'symfony'
 $mysql_user   = 'symfony'
@@ -23,6 +25,6 @@ Stage['first'] -> Stage['main'] -> Stage['last']
 import 'basic.pp'
 import 'nodes.pp'
 
-class{'basic':
+class{ 'basic':
   stage => first
 }
