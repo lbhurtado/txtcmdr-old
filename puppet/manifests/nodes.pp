@@ -24,14 +24,48 @@ node default {
     require => File['/etc/txtcmdr'],
   }
   
-  class{'postfix':}
+  class{'postfix':
+  }
 
   package{'postfix-mysql':
     ensure => installed,
     require => Class['postfix'],
   }
 
-  class{'dovecot':}
-  
+  class{'dovecot':
+    package => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
+  }
+
+  package{'roundcube':}
+
+  package{'roundcube-plugins':
+    require => Package['roundcube'],
+  }
+
+  package{'phpmyadmin':
+  }
+
+  openssl::certificate::x509{'mailserver':
+    ensure       => present,
+    country      => 'PH',
+    organization => 'Applester Dev\'t. Corporation',
+    unit         => 'Computing Division',
+    commonname   => $fqdn,
+    base_dir     => '/tmp',
+    days         => 3650,
+  }
+
+  file{'/etc/ssl/private/mailserver.pem':
+    ensure => present,
+    source => '/tmp/mailserver.key',
+    require => Openssl::Certificate::X509['mailserver'],
+  }->exec{'rm /tmp/mailserver.key':}
+
+  file{'/etc/ssl/certs/mailserver.pem':
+    ensure => present,
+    source => '/tmp/mailserver.crt',
+    require => Openssl::Certificate::X509['mailserver'],
+  }->exec{'rm /tmp/mailserver.crt':}
+
   Firewall <||>
 }

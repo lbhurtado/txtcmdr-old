@@ -1,14 +1,11 @@
-DROP TABLE IF EXISTS `virtual_aliases`;
-DROP TABLE IF EXISTS `virtual_users`;
-DROP TABLE IF EXISTS `virtual_domains`;
 
-CREATE TABLE `virtual_domains` (
+CREATE TABLE IF NOT EXISTS `virtual_domains` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(50) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `virtual_users` (
+CREATE TABLE IF NOT EXISTS `virtual_users` (
   `id` int(11) NOT NULL auto_increment,
   `domain_id` int(11) NOT NULL,
   `password` varchar(106) NOT NULL,
@@ -18,7 +15,7 @@ CREATE TABLE `virtual_users` (
   FOREIGN KEY (domain_id) REFERENCES virtual_domains(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `virtual_aliases` (
+CREATE TABLE IF NOT EXISTS `virtual_aliases` (
   `id` int(11) NOT NULL auto_increment,
   `domain_id` int(11) NOT NULL,
   `source` varchar(100) NOT NULL,
@@ -27,14 +24,14 @@ CREATE TABLE `virtual_aliases` (
   FOREIGN KEY (domain_id) REFERENCES virtual_domains(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `mailserver`.`virtual_domains`
+REPLACE INTO `mailserver`.`virtual_domains`
 (`id` ,`name`)
 VALUES
   ('1', 'txtcmdr.xyz'),
   ('2', 'txtcmdr.org'),
   ('3', 'txtcmdr.net');
 
-INSERT INTO `mailserver`.`virtual_users`
+REPLACE INTO `mailserver`.`virtual_users`
 (`id`, `domain_id`, `password` , `email`)
 VALUES
   ('1', '1', MD5('apple1'), 'lester@txtcmdr.xyz'),
@@ -42,10 +39,9 @@ VALUES
   ('3', '1', ENCRYPT('firstpassword', CONCAT('$6$', SUBSTRING(SHA(RAND()), -16))), 'email1@applester.dev'),
   ('4', '1', ENCRYPT('secondpassword', CONCAT('$6$', SUBSTRING(SHA(RAND()), -16))), 'email2@applester.dev');
 
-INSERT INTO `mailserver`.`virtual_aliases`
+REPLACE INTO `mailserver`.`virtual_aliases`
 (`id`, `domain_id`, `source`, `destination`)
 VALUES
   ('1', '1', 'info@txtcmdr.xyz', 'lester@txtcmdr.xyz'),
   ('2', '1', 'sales@txtcmdr.xyz', 'lester@txtcmdr.xyz');
-
 
