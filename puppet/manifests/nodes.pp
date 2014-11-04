@@ -11,20 +11,39 @@ node default {
     user     => $postfix_user,
     password => $postfix_pass,
     host     => $postfix_host,
-    sql      => '/etc/txtcmdr/postfix.sql.ext',
+    grant    => ['SELECT'],
+    sql      => '/etc/txtcmdr/postfix.sql',
     enforce_sql => true,
-    require  => File['/etc/txtcmdr/postfix.sql.ext'],
+    require  => File['/etc/txtcmdr/postfix.sql'],
   }
 
   file{'/etc/txtcmdr': ensure => directory}
 
-  file{'/etc/txtcmdr/postfix.sql.ext':
+  file{'/etc/txtcmdr/postfix.sql':
     ensure  => present,
-    source  => 'puppet:///files/postfix.sql',
+    source  => 'puppet:///modules/txtcmdr/postfix/postfix.sql',
     require => File['/etc/txtcmdr'],
   }
   
-  class{'postfix':
+  class{'postfix':}
+
+  file{'/tmp/map.erb':
+    ensure  => present,
+    source  => 'puppet:///modules/txtcmdr/postfix/map.erb',
+  }
+  
+  postfix::map{'mysql-virtual-mailbox-domains.cf':
+    maps => {
+      user => $postfix_user,
+      password => $postfix_pass,
+      hosts => '127.0.0.1',
+      dbname => $postfix_db,
+      query => 'select 1 from virtual_domains where name=\'%s\''
+    },
+  }
+
+  postfix::postconf{'virtual_mailbox_domains':
+    value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
 
   package{'postfix-mysql':
