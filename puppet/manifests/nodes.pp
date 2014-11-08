@@ -7,6 +7,8 @@ node default {
     override_options => { 'mysqld' => { 'max_connections' => '1024' } },
   }
 
+  txtcmdr::postfix::popsql{'postfix.sql':}
+
   mysql::db{$postfix_db:
     user     => $postfix_user,
     password => $postfix_pass,
@@ -14,24 +16,15 @@ node default {
     grant    => ['SELECT'],
     sql      => '/etc/txtcmdr/postfix.sql',
     enforce_sql => true,
-    require  => File['/etc/txtcmdr/postfix.sql'],
+    require  => Txtcmdr::Postfix::Popsql['postfix.sql'],
   }
 
-  file{'/etc/txtcmdr': ensure => directory}
-
-  file{'/etc/txtcmdr/postfix.sql':
-    ensure  => present,
-    source  => 'puppet:///modules/txtcmdr/postfix/postfix.sql',
-    require => File['/etc/txtcmdr'],
-  }
-  
   class{'postfix':}
-
-  file{'/tmp/map.erb':
-    ensure  => present,
-    source  => 'puppet:///modules/txtcmdr/postfix/map.erb',
-  }
-  
+/*
+  class{'txtcmdr':}
+*/ 
+  txtcmdr::postfix::maptemplate{'map.erb':}
+/*
   postfix::map{'mysql-virtual-mailbox-domains.cf':
     maps => {
       user => $postfix_user,
@@ -40,12 +33,31 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_domains where name=\'%s\''
     },
+    template => '/etc/txtcmdr/map.erb',
+    require => Txtcmdr::Postfix::Maptemplate['map.erb'], 
   }
 
   postfix::postconf{'virtual_mailbox_domains':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
+*/
+/*
+  postfix::map{'mysql-virtual-mailbox-users.cf':
+    maps => {
+      user => $postfix_user,
+      password => $postfix_pass,
+      hosts => '127.0.0.1',
+      dbname => $postfix_db,
+      query => 'select 1 from virtual_users where email=\'%s\''
+    },
+    template => 'puppet:///modules/txtcmdr/map.erb',
+    require => Class['txtcmdr'], 
+  }
 
+  postfix::postconf{'virtual_mailbox_users':
+    value => "${postfix::config_dir}/mysql-virtual-mailbox-users.cf"
+  }
+*/
   package{'postfix-mysql':
     ensure => installed,
     require => Class['postfix'],
