@@ -17,5 +17,5 @@ mod 'example42/dovecot', :git => 'https://github.com/example42/puppet-dovecot.gi
 mod 'example42/exim', :git => 'https://github.com/example42/puppet-exim.git'
 mod 'netmanagers/bind', :git => 'https://github.com/netmanagers/puppet-bind.git'
 mod 'camptocamp/openssl', :git => 'https://github.com/camptocamp/puppet-openssl.git'
-mod 'lbhurtado/smstools', :git => 'https://github.com/lbhurtado/puppet-smstools.git'
-mod 'lbhurtado/txtcmdr', :git => 'https://github.com/lbhurtado/puppet-txtcmdr.git'
+mod 'smstools', :git => 'https://github.com/lbhurtado/puppet-smstools.git'
+mod 'txtcmdr', :git => 'https://github.com/lbhurtado/puppet-txtcmdr.git'

@@ -7,24 +7,27 @@ node default {
     override_options => { 'mysqld' => { 'max_connections' => '1024' } },
   }
 
-  txtcmdr::postfix::popsql{'postfix.sql':}
+  txtcmdr::popsql{'postfix.sql':}
+
+  include txtcmdr::params
 
   mysql::db{$postfix_db:
     user     => $postfix_user,
     password => $postfix_pass,
     host     => $postfix_host,
     grant    => ['SELECT'],
-    sql      => '/etc/txtcmdr/postfix.sql',
+    sql      => "${txtcmdr::params::config_dir}/postfix.sql",
     enforce_sql => true,
-    require  => Txtcmdr::Postfix::Popsql['postfix.sql'],
+    require  => Txtcmdr::Popsql['postfix.sql'],
   }
 
   class{'postfix':}
-/*
-  class{'txtcmdr':}
-*/ 
+
+  class{'txtcmdr':
+  }
+/* 
   txtcmdr::postfix::maptemplate{'map.erb':}
-/*
+
   postfix::map{'mysql-virtual-mailbox-domains.cf':
     maps => {
       user => $postfix_user,
