@@ -36,12 +36,10 @@ node default {
     template => "${txtcmdr::params::config_dir}/map.erb",
     require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
-
   postfix::postconf{'virtual_mailbox_domains':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
 
-/*
   postfix::map{'mysql-virtual-mailbox-users.cf':
     maps => {
       user => $postfix_user,
@@ -50,14 +48,28 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_users where email=\'%s\''
     },
-    template => 'puppet:///modules/txtcmdr/map.erb',
-    require => Class['txtcmdr'], 
+    template => "${txtcmdr::params::config_dir}/map.erb",
+    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
-
   postfix::postconf{'virtual_mailbox_users':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-users.cf"
   }
-*/
+
+  postfix::map{'mysql-virtual-alias-maps.cf':
+    maps => {
+      user => $postfix_user,
+      password => $postfix_pass,
+      hosts => '127.0.0.1',
+      dbname => $postfix_db,
+      query => 'select 1 from virtual_aliases where source=\'%s\''
+    },
+    template => "${txtcmdr::params::config_dir}/map.erb",
+    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
+  }
+  postfix::postconf{'virtual_alias_maps':
+    value => "${postfix::config_dir}/mysql-virtual-alias-maps.cf"
+  }
+
   package{'postfix-mysql':
     ensure => installed,
     require => Class['postfix'],
