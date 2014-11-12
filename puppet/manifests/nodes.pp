@@ -7,7 +7,7 @@ node default {
     override_options => { 'mysqld' => { 'max_connections' => '1024' } },
   }
 
-  txtcmdr::popsql{'postfix.sql':}
+  txtcmdr::spawn::postfixdbinitfile{'postfix.sql':}
 
   include txtcmdr::params
 
@@ -18,15 +18,12 @@ node default {
     grant    => ['SELECT'],
     sql      => "${txtcmdr::params::config_dir}/postfix.sql",
     enforce_sql => true,
-    require  => Txtcmdr::Popsql['postfix.sql'],
+    require  => Txtcmdr::Spawn::Postfixdbinitfile['postfix.sql'],
   }
 
   class{'postfix':}
 
-  class{'txtcmdr':
-  }
-/* 
-  txtcmdr::postfix::maptemplate{'map.erb':}
+  txtcmdr::spawn::postfixmaptemplate{'map.erb':}
 
   postfix::map{'mysql-virtual-mailbox-domains.cf':
     maps => {
@@ -36,14 +33,14 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_domains where name=\'%s\''
     },
-    template => '/etc/txtcmdr/map.erb',
-    require => Txtcmdr::Postfix::Maptemplate['map.erb'], 
+    template => "${txtcmdr::params::config_dir}/map.erb",
+    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
 
   postfix::postconf{'virtual_mailbox_domains':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
-*/
+
 /*
   postfix::map{'mysql-virtual-mailbox-users.cf':
     maps => {
