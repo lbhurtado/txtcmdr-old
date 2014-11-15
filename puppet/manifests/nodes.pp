@@ -1,29 +1,27 @@
 node default {
 
+  class{'txtcmdr':}
+
   class{'exim': absent => true}
 
   class{'mysql::server':
     root_password => 'linux',
     override_options => { 'mysqld' => { 'max_connections' => '1024' } },
+    require => Class['txtcmdr'],
   }
-
-  txtcmdr::spawn::postfixdbinitfile{'postfix.sql':}
-
-  include txtcmdr::params
 
   mysql::db{$postfix_db:
     user     => $postfix_user,
     password => $postfix_pass,
     host     => $postfix_host,
     grant    => ['SELECT'],
-    sql      => "${txtcmdr::params::config_dir}/postfix.sql",
+    sql      => $txtcmdr::postfix_db_init_sql,
     enforce_sql => true,
-    require  => Txtcmdr::Spawn::Postfixdbinitfile['postfix.sql'],
   }
 
-  class{'postfix':}
-
-  txtcmdr::spawn::postfixmaptemplate{'map.erb':}
+  class{'postfix':
+    require => Class['txtcmdr'],
+  } 
 
   postfix::map{'mysql-virtual-mailbox-domains.cf':
     maps => {
@@ -33,9 +31,8 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_domains where name=\'%s\''
     },
-    template => "${txtcmdr::params::config_dir}/map.erb",
-    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
+  ->  
   postfix::postconf{'virtual_mailbox_domains':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
@@ -48,9 +45,8 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_users where email=\'%s\''
     },
-    template => "${txtcmdr::params::config_dir}/map.erb",
-    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
+  ->
   postfix::postconf{'virtual_mailbox_users':
     value => "${postfix::config_dir}/mysql-virtual-mailbox-users.cf"
   }
@@ -63,9 +59,8 @@ node default {
       dbname => $postfix_db,
       query => 'select 1 from virtual_aliases where source=\'%s\''
     },
-    template => "${txtcmdr::params::config_dir}/map.erb",
-    require  => Txtcmdr::Spawn::Postfixmaptemplate['map.erb'],
   }
+  ->
   postfix::postconf{'virtual_alias_maps':
     value => "${postfix::config_dir}/mysql-virtual-alias-maps.cf"
   }
@@ -75,9 +70,24 @@ node default {
     require => Class['postfix'],
   }
 
-  class{'dovecot':
-    package => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
+  group{'vmail': gid => 5000}
+ 
+  user{'vmail':
+    ensure     => present,
+    uid        => 5000,
+    gid        => 'vmail',
+    home       => '/var/vmail',
+    managehome => true,
   }
+
+/*
+  class{'dovecot':
+    protocols => 'imap pop3',
+    ssl_key   => '/etc/ssl/private/mailserver.pem',
+    ssl_cert  => '/etc/ssl/certs/mailserver.pem',  
+    require   => File['/etc/ssl/private/mailserver.pem'],
+  }
+*/
 
   package{'roundcube':}
 
@@ -111,4 +121,9 @@ node default {
   }->exec{'rm /tmp/mailserver.crt':}
 
   Firewall <||>
+  
+  class{'dovecot':
+    package => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
+  }
+  
 }
