@@ -37,7 +37,7 @@ node default {
     value => "${postfix::config_dir}/mysql-virtual-mailbox-domains.cf"
   }
 
-  postfix::map{'mysql-virtual-mailbox-users.cf':
+  postfix::map{'mysql-virtual-mailbox-maps.cf':
     maps => {
       user => $postfix_user,
       password => $postfix_pass,
@@ -47,8 +47,8 @@ node default {
     },
   }
   ->
-  postfix::postconf{'virtual_mailbox_users':
-    value => "${postfix::config_dir}/mysql-virtual-mailbox-users.cf"
+  postfix::postconf{'virtual_mailbox_maps':
+    value => "${postfix::config_dir}/mysql-virtual-mailbox-maps.cf"
   }
 
   postfix::map{'mysql-virtual-alias-maps.cf':
@@ -124,6 +124,8 @@ node default {
   
   class{'dovecot':
     package => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
+    absent => false, 
+    source_dir => 'puppet:///modules/txtcmdr/dovecot',
   }
   
 }
