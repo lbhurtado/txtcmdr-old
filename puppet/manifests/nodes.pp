@@ -65,6 +65,7 @@ node default {
     value => "${postfix::config_dir}/mysql-virtual-alias-maps.cf"
   }
 
+
   package{'postfix-mysql':
     ensure => installed,
     require => Class['postfix'],
@@ -80,23 +81,13 @@ node default {
     managehome => true,
   }
 
-/*
-  class{'dovecot':
-    protocols => 'imap pop3',
-    ssl_key   => '/etc/ssl/private/mailserver.pem',
-    ssl_cert  => '/etc/ssl/certs/mailserver.pem',  
-    require   => File['/etc/ssl/private/mailserver.pem'],
-  }
-*/
-
   package{'roundcube':}
 
   package{'roundcube-plugins':
     require => Package['roundcube'],
   }
 
-  package{'phpmyadmin':
-  }
+  package{'phpmyadmin':}
 
   openssl::certificate::x509{'mailserver':
     ensure       => present,
@@ -109,23 +100,50 @@ node default {
   }
 
   file{'/etc/ssl/private/mailserver.pem':
-    ensure => present,
-    source => '/tmp/mailserver.key',
+    ensure  => present,
+    source  => '/tmp/mailserver.key',
     require => Openssl::Certificate::X509['mailserver'],
-  }->exec{'rm /tmp/mailserver.key':}
+  }
+  ->
+  exec{'rm /tmp/mailserver.key':}
 
   file{'/etc/ssl/certs/mailserver.pem':
-    ensure => present,
-    source => '/tmp/mailserver.crt',
+    ensure  => present,
+    source  => '/tmp/mailserver.crt',
     require => Openssl::Certificate::X509['mailserver'],
-  }->exec{'rm /tmp/mailserver.crt':}
+  }
+  ->
+  exec{'rm /tmp/mailserver.crt':}
 
   Firewall <||>
   
   class{'dovecot':
-    package => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
-    absent => false, 
+    config_file_group => 'vmail',
+    config_file_mode  => 'g+r',
+    package    => ['dovecot-imapd','dovecot-pop3d','dovecot-mysql','dovecot-managesieved'],
     source_dir => 'puppet:///modules/txtcmdr/dovecot',
+    require    => [Class['txtcmdr'],File['/etc/ssl/private/mailserver.pem'],File['/etc/ssl/certs/mailserver.pem']],
   }
   
+  file{'/etc/dovecot/dovecot-sql.conf.ext':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => 'go=',    
+    require => Class['dovecot'],
+  }
+  
+  class { 'postfix::mastercf':
+    source => 'puppet:///modules/txtcmdr/master.cf',
+    require => Class['txtcmdr'],
+  }
+  ->
+  postfix::postconf{'virtual_transport':
+    value => 'dovecot',
+  }
+  ->
+  postfix::postconf{'dovecot_destination_recipient_limit':
+    value => '1',
+  }
+
 }
