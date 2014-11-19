@@ -2,23 +2,25 @@ node default {
 
   class{'txtcmdr':}
 
-  class{'exim': absent => true}
+  class{'txtcmdr::noexim':}
 
   class{'mysql::server':
     root_password => 'linux',
-    override_options => { 'mysqld' => { 'max_connections' => '1024' } },
     require => Class['txtcmdr'],
   }
 
   mysql::db{$postfix_db:
-    user     => $postfix_user,
-    password => $postfix_pass,
-    host     => $postfix_host,
-    grant    => ['SELECT'],
-    sql      => $txtcmdr::postfix_db_init_sql,
+    user        => $postfix_user,
+    password    => $postfix_pass,
+    host        => $postfix_host,
+    grant       => ['SELECT'],
+    sql         => $txtcmdr::postfix_db_sql_file,
     enforce_sql => true,
   }
 
+  class{'txtcmdr::postfix':}
+
+/*
   class{'postfix':
     require => Class['txtcmdr'],
   } 
@@ -114,9 +116,11 @@ node default {
   }
   ->
   exec{'rm /tmp/mailserver.crt':}
+*/
 
   Firewall <||>
-  
+
+/*  
   class{'dovecot':
     config_file_group => 'vmail',
     config_file_mode  => 'g+r',
@@ -145,5 +149,5 @@ node default {
   postfix::postconf{'dovecot_destination_recipient_limit':
     value => '1',
   }
-
+*/
 }
