@@ -9,21 +9,26 @@ node default {
     require => Class['txtcmdr'],
   }
 
+  class{'txtcmdr::postfix':
+    require => Class['mysql::server'],
+  }
+
   mysql::db{$postfix_db:
     user        => $postfix_user,
     password    => $postfix_pass,
     host        => $postfix_host,
     grant       => ['SELECT'],
-    sql         => $txtcmdr::postfix_db_sql_file,
+    sql         => $txtcmdr::postfix::initdb,
     enforce_sql => true,
+    require     => Class['txtcmdr::postfix'],
   }
 
-  class{'txtcmdr::postfix':}
+
+  notify {"yes - ${txtcmdr::postfix::initdb}":
+    require => Class['txtcmdr::postfix'],
+  }
 
 /*
-  class{'postfix':
-    require => Class['txtcmdr'],
-  } 
 
   postfix::map{'mysql-virtual-mailbox-domains.cf':
     maps => {
