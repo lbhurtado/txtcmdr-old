@@ -13,33 +13,14 @@ node default {
     require => Class['mysql::server'],
   }
 
-  mysql::db{$postfix_db:
-    user        => $postfix_user,
-    password    => $postfix_pass,
-    host        => $postfix_host,
-    grant       => ['SELECT'],
-    sql         => $txtcmdr::postfix::initdb,
-    enforce_sql => true,
-    require     => Class['txtcmdr::postfix'],
-  }
-  ->
-  exec{"rm ${txtcmdr::postfix::initdb}":}
-
-  class{'txtcmdr::secure':}
+#  class{'txtcmdr::secure':}
 
 /*
-
   package{'roundcube':}
-
   package{'roundcube-plugins':
     require => Package['roundcube'],
   }
-
   package{'phpmyadmin':}
-
-
-
-
 */
 
   Firewall <||>
@@ -69,7 +50,7 @@ node default {
   postfix::postconf{'virtual_transport':
     value => 'dovecot',
   }
-  ->
+ ->
   postfix::postconf{'dovecot_destination_recipient_limit':
     value => '1',
   }
