@@ -13,7 +13,9 @@ node default {
     require => Class['mysql::server'],
   }
 
-#  class{'txtcmdr::secure':}
+  class{'txtcmdr::secure':}
+  
+  class{'txtcmdr::dovecot':}
 
 /*
   package{'roundcube':}
